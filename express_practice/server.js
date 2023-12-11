@@ -97,6 +97,24 @@ app.get('/fetch-data', (req, res) => {
     res.send('Started fetching and storing data.');
 });
 
+
+//T_youth_policies에 데이터를 가져와서 json형식으로 변환
+app.get('/youth-policies', (req, res) => {
+
+    const query = "SELECT * FROM T_youth_policies WHERE mngtMson LIKE '%화성%'"; // 데이터를 가져오는 SQL 쿼리
+
+    pool.query(query, (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+            res.status(500).send('Server error');
+            return;
+        }
+
+        // 결과를 JSON 형식으로 변환하여 반환
+        res.json(results);
+    });
+});
+
 // 서버 시작
 app.listen(3000, () => {
     console.log('Server running on port 3000');
