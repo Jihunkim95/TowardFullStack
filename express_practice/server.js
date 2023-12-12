@@ -18,7 +18,7 @@ const pool = mysql.createPool({
 // 외부 API에서 XML 데이터를 가져와 MySQL에 저장하는 함수
 async function fetchAndStoreXMLData() {
     const openApiVlak = 'ba522657bfea6c5477a251ee';
-    const pageIndex = '1';  
+    const pageIndex = '2';  
     const display = '100';
     const srchPolyBizSecd = '003002008';  
       const apiUrl = `https://www.youthcenter.go.kr/opi/youthPlcyList.do?openApiVlak=${openApiVlak}&pageIndex=${pageIndex}&display=${display}&srchPolyBizSecd=${srchPolyBizSecd}`;
