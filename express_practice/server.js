@@ -153,13 +153,14 @@ app.get('/youth-policies', (req, res) => {
     }
     //취업상태
     if (req.query.employmentStatus) {
+        let employmentStatus = req.query.employmentStatus === "전체선택" ? `%${""}%` : `%${req.query.employmentStatus}%`;
         query += " AND (empmSttsCn = '' OR empmSttsCn LIKE ?)";
-        queryParams.push(`%${req.query.employmentStatus}%`); // ? 값을 %value%로 변경
+        queryParams.push(`%${employmentStatus}%`); // ? 값을 %value%로 변경
     }
+ 
     //학력
     if (req.query.educationLevel) {
         let educationLevel = req.query.educationLevel === "전체선택" ? `%${""}%` : `%${req.query.educationLevel}%`;
-        // console.log("educationLevel",educationLevel)
         query += " AND (accrRqisCn = '' OR accrRqisCn LIKE ?)";
         queryParams.push(educationLevel); // ? 값을 %value%로 변경
     }
