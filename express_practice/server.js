@@ -15,6 +15,20 @@ const pool = mysql.createPool({
     database: 'test_db' //접속할 db
   });
 
+  // 서버 시작
+app.listen(3000,'0.0.0.0', () => {
+    console.log('Server running on port 3000');
+        // 데이터베이스 연결 확인
+        pool.query('SELECT 1 + 1 AS solution', (err, results, fields) => {
+            if (err) {
+                console.error('Database connection error:', err);
+                return;
+            }
+            console.log('Database connection successful, solution:', results[0].solution);
+        });
+});
+
+
 // 외부 API에서 XML 데이터를 가져와 MySQL에 저장하는 함수
 async function fetchAndStoreXMLData() {
     const openApiVlak = 'ba522657bfea6c5477a251ee';
@@ -151,17 +165,18 @@ app.get('/youth-policies', (req, res) => {
         query += " AND (polyBizSecd = ? or polyBizSecd = '003002008')";
         queryParams.push(req.query.residence);
     }
+
     //취업상태
     if (req.query.employmentStatus) {
         let employmentStatus = req.query.employmentStatus === "전체선택" ? `%${""}%` : `%${req.query.employmentStatus}%`;
-        query += " AND (empmSttsCn = '' OR empmSttsCn LIKE ?)";
+        query += " AND ((empmSttsCn = '' OR empmSttsCn LIKE ?) OR (empmSttsCn LIKE '%제한없음%' OR empmSttsCn = '-'))";
         queryParams.push(`%${employmentStatus}%`); // ? 값을 %value%로 변경
     }
  
     //학력
     if (req.query.educationLevel) {
         let educationLevel = req.query.educationLevel === "전체선택" ? `%${""}%` : `%${req.query.educationLevel}%`;
-        query += " AND (accrRqisCn = '' OR accrRqisCn LIKE ?)";
+        query += " AND ((accrRqisCn = '' OR accrRqisCn LIKE ?) OR (accrRqisCn LIKE '%제한없음%' OR accrRqisCn = '-'))";
         queryParams.push(educationLevel); // ? 값을 %value%로 변경
     }
     //만나이
@@ -187,15 +202,31 @@ app.get('/youth-policies', (req, res) => {
     });
 });
 
-// 서버 시작
-app.listen(3000,'0.0.0.0', () => {
-    console.log('Server running on port 3000');
-        // 데이터베이스 연결 확인
-        pool.query('SELECT 1 + 1 AS solution', (err, results, fields) => {
-            if (err) {
-                console.error('Database connection error:', err);
-                return;
-            }
-            console.log('Database connection successful, solution:', results[0].solution);
-        });
+//JSON 요청 본문을 파싱
+app.use(express.json());
+
+// POST 
+app.post('/youth-policies/views', (req, res) => {
+    // 요청 본문에서 'bizId'를 추출
+    const { bizId } = req.body;
+    console.log(req.body);
+    if (!bizId) {
+        // 'bizId'가 없으면, 400 Bad Request 에러를 클라이언트에게 응답
+        return res.status(400).json({ message: 'bizId is required' });
+    }
+
+    // 파라미터로 인젝션 방지
+    const sql = `UPDATE T_youth_policies SET views = views + 1 WHERE bizId = ?`;
+
+    // 데이터베이스 쿼리를 실행
+    pool.query(sql, [bizId], (err, result) => {
+        if (err) {
+            // 데이터베이스 에러가 발생하면, 서버 에러 메시지를 응답합니다.
+            console.error('Database query error:', err);
+            return res.status(500).json({ message: 'Database query error' });
+        }
+
+        // 성공적으로 업데이트가 완료되면, 성공 메시지를 클라이언트에게 응답합니다.
+        res.status(200).json({ message: 'View count updated successfully' });
+    });
 });
