@@ -32,11 +32,10 @@ app.listen(3000,'0.0.0.0', () => {
 // 외부 API에서 XML 데이터를 가져와 MySQL에 저장하는 함수
 async function fetchAndStoreXMLData() {
     const openApiVlak = 'ba522657bfea6c5477a251ee';
-    const pageIndex = '7';  
+    const pageIndex = '6';  
     const display = '100';
     const srchPolyBizSecd = '003002008';  
-      const apiUrl = `https://www.youthcenter.go.kr/opi/youthPlcyList.do?openApiVlak=${openApiVlak}&pageIndex=${pageIndex}&display=${display}&srchPolyBizSecd=${srchPolyBizSecd}`;
-
+    const apiUrl = `https://www.youthcenter.go.kr/opi/youthPlcyList.do?openApiVlak=${openApiVlak}&pageIndex=${pageIndex}&display=${display}&srchPolyBizSecd=${srchPolyBizSecd}`;
 
     try {
         const response = await axios.get(apiUrl);
@@ -73,30 +72,31 @@ async function fetchAndStoreXMLData() {
                 }
             }
             youthPolicies.forEach(policy => {
-                // 'ageInfo'에서 숫자만 추출
-                const ageNumbers = policy.ageInfo.match(/\d+/g) || [];
-                let minAge = '';
-                let maxAge = '';
+            // 'ageInfo'에서 숫자만 추출
+            const ageNumbers = policy.ageInfo.match(/\d+/g) || [];
 
-                if (policy.ageInfo === "제한없음") {
-                    // 예: minAge와 maxAge를 빈 문자열로 두거나, 특정 값을 할당합니다
-                    minAge = '0'
-                    maxAge = '200'
-                } else {
-                    // 'ageInfo'에서 숫자만 추출
-                    const ageNumbers = policy.ageInfo.match(/\d+/g) || [];
-            
-                    if (ageNumbers.length >= 2) {
-                        [minAge, maxAge] = ageNumbers;
-                    } else if (ageNumbers.length === 1) {
-                        minAge = ageNumbers[0];
-                    }
-                }
+            if (policy.ageInfo === "제한없음") {
+                // '제한없음'의 경우 minAge를 0으로, maxAge를 200으로 설정
+                minAge = '0';
+                maxAge = '200';
+            } else if (ageNumbers.length >= 2) {
+                // 두 개 이상의 숫자가 있는 경우, 첫 번째 숫자를 minAge로, 두 번째 숫자를 maxAge로
+                [minAge, maxAge] = ageNumbers;
+            } else if (ageNumbers.length === 1) {
+                // 숫자가 하나만 있는 경우, minAge를 0으로, maxAge를 해당 숫자로 설정
+                minAge = '0';
+                maxAge = ageNumbers[0];
+            } else {
+                // 숫자가 없는 경우 기본값을 설정
+                minAge = '0';
+                maxAge = '0';
+            }
+
                 //날짜 추출
                 let [startDate, endDate] = extractDates(policy.bizPrdCn);
                 console.log(startDate, endDate);
 
-                const query = 'INSERT INTO T_youth_policies SET ?';
+                const query = 'INSERT INTO T_youth_policies_TEST SET ?';
                 pool.query(query, {
                     rnum: policy.rnum,
                     bizId: policy.bizId,
