@@ -1,11 +1,11 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const xml2js = require('xml2js');
 const mysql = require('mysql');
 
 const app = express();
 
 const axios = require('axios');
+
 // MySQL 데이터베이스 연결 설정
 const pool = mysql.createPool({
     connectionLimit: 10,
@@ -14,6 +14,9 @@ const pool = mysql.createPool({
     password: '3274',
     database: 'test_db' //접속할 db
   });
+
+  // 서버 시작과 동시에 300분마다 fetchAndStoreXMLData 함수를 실행
+setInterval(fetchAndStoreXMLData, 18000000);
 
   // 서버 시작
 app.listen(3000,'0.0.0.0', () => {
@@ -26,13 +29,16 @@ app.listen(3000,'0.0.0.0', () => {
             }
             console.log('Database connection successful, solution:', results[0].solution);
         });
+
+    // 서버 시작 시 첫 실행
+    fetchAndStoreXMLData();
 });
 
 
 // 외부 API에서 XML 데이터를 가져와 MySQL에 저장하는 함수
 async function fetchAndStoreXMLData() {
     const openApiVlak = 'ba522657bfea6c5477a251ee';
-    const pageIndex = '6';  
+    const pageIndex = '1';  
     const display = '100';
     const srchPolyBizSecd = '003002008';  
     const apiUrl = `https://www.youthcenter.go.kr/opi/youthPlcyList.do?openApiVlak=${openApiVlak}&pageIndex=${pageIndex}&display=${display}&srchPolyBizSecd=${srchPolyBizSecd}`;
@@ -96,9 +102,8 @@ async function fetchAndStoreXMLData() {
                 let [startDate, endDate] = extractDates(policy.bizPrdCn);
                 console.log(startDate, endDate);
 
-                const query = 'INSERT INTO T_youth_policies_TEST SET ?';
+                const query = 'INSERT INTO T_youth_policies SET ?';
                 pool.query(query, {
-                    rnum: policy.rnum,
                     bizId: policy.bizId,
                     polyBizSecd: policy.polyBizSecd,
                     polyBizTy: policy.polyBizTy,
